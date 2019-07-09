@@ -14,18 +14,23 @@ int main(int argc,char* argv[])
 	cv::Point2f center;
 	std::vector<cv::Point2f> pt;
     std::vector<std::vector<cv::Point2f> > corners;
-     std::vector<int> ids;
+    std::vector<int> ids;
+    cv::Ptr<cv::aruco::DetectorParameters> parameters;
+
 
     // dictionary生成
     const cv::aruco::PREDEFINED_DICTIONARY_NAME dictionary_name = cv::aruco::DICT_4X4_50;
     cv::Ptr<cv::aruco::Dictionary> dictionary = cv::aruco::getPredefinedDictionary(dictionary_name);
 
-
+    rs2::colorizer colormap;
     rs2::pipeline pipe;
     rs2::config cfg;
     cfg.enable_stream(RS2_STREAM_COLOR, wide, height, RS2_FORMAT_BGR8, 30);
     cfg.enable_stream(RS2_STREAM_DEPTH, wide, height, RS2_FORMAT_Z16, 30);
     pipe.start(cfg);
+    colormap.set_option(RS2_OPTION_HISTOGRAM_EQUALIZATION_ENABLED, 1.f);
+    colormap.set_option(RS2_OPTION_COLOR_SCHEME, 2.f);
+
 
     for(int i = 0; i < 10; i++)
     {
@@ -33,13 +38,20 @@ int main(int argc,char* argv[])
     }
     while(1){
         auto frames = pipe.wait_for_frames();
-        auto depth = frames.get_depth_frame();
-        auto colored_frame = frames.get_color_frame();
+        //auto depth = frames.get_depth_frame();
+        //auto colored_frame = frames.get_color_frame();
 
-         cv::Mat image(cv::Size(wide, height), CV_8UC3, (void*)colored_frame.get_data(), cv::Mat::AUTO_STEP);
-         cv::Mat depthmat(cv::Size(wide, height), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
-         cv::aruco::detectMarkers(image, dictionary, corners, ids);
+        // align
+        rs2::align align(RS2_STREAM_COLOR);
+        auto aligned_frames = align.process(frames);
+        rs2::video_frame colored_frame = aligned_frames.first(RS2_STREAM_COLOR);
+        rs2::depth_frame depth = aligned_frames.get_depth_frame()/*.apply_filter(colormap)*/; 
 
+        cv::Mat image(cv::Size(wide, height), CV_8UC3, (void*)colored_frame.get_data(), cv::Mat::AUTO_STEP);
+        cv::Mat depthmat(cv::Size(wide, height), CV_16UC1, (void*)depth.get_data(), cv::Mat::AUTO_STEP);
+        cv::aruco::detectMarkers(image, dictionary, corners, ids);
+        //cv::Mat outputImage 
+        cv::aruco::drawDetectedMarkers(image, corners, ids);
          if (ids.size()>0)
          {
 
