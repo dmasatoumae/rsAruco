@@ -37,18 +37,22 @@ int main(int argc,char* argv[])
     rs2::colorizer colormap;
     rs2::pipeline pipe;
     rs2::config cfg;
+    std::cout<<"0"<<std::endl;
     cfg.enable_stream(RS2_STREAM_COLOR, wide, height, RS2_FORMAT_BGR8, 30);
     cfg.enable_stream(RS2_STREAM_DEPTH, wide, height, RS2_FORMAT_Z16, 30);
+    std::cout<<"0.1"<<std::endl;
     pipe.start(cfg);
-    colormap.set_option(RS2_OPTION_HISTOGRAM_EQUALIZATION_ENABLED, 1.f);
-    colormap.set_option(RS2_OPTION_COLOR_SCHEME, 2.f);
+    //colormap.set_option(RS2_OPTION_HISTOGRAM_EQUALIZATION_ENABLED, 1.f);
+    //colormap.set_option(RS2_OPTION_COLOR_SCHEME, 2.f);
     float actual_marker_length = 0.195;
 
-
+    std::cout<<"1"<<std::endl;
+    /*
     for(int i = 0; i < 10; i++)
     {
         auto frames = pipe.wait_for_frames();
     }
+    */
     while(1){
         auto frames = pipe.wait_for_frames();
         //auto depth = frames.get_depth_frame();

@@ -5,13 +5,13 @@
 #include <opencv2/highgui.hpp>
 #include <librealsense2/rs.hpp>
 #include <iostream>
+#include <string>
 
 int main(int argc,char* argv[])
 {
     //camera parameters read yml file
-    cv::FileStorage fs("../calibration_paramsD435i2.yml", cv::FileStorage::READ);
+    cv::FileStorage fs("../../calibration_params/calibration_paramsD4151.yml", cv::FileStorage::READ);
     
-    int count = 0;
     int device_count=0;
     FILE *fp;
 
@@ -47,6 +47,7 @@ int main(int argc,char* argv[])
     // std::vector<int> window_name;
     for (auto&& dev : ctx.query_devices())
     {
+        std::cout<<"device connect"<<std::endl;
         std::stringstream ss;
         rs2::pipeline pipe(ctx);
         rs2::config cfg;
@@ -54,17 +55,23 @@ int main(int argc,char* argv[])
 
         cfg.enable_stream(RS2_STREAM_COLOR, wide, height, RS2_FORMAT_BGR8, 30);
         cfg.enable_stream(RS2_STREAM_DEPTH, wide, height, RS2_FORMAT_Z16, 30);
+        std::cout<<"device connect2"<<std::endl;
+
         //ss<<bag_name<<".bag";
         pipe.start(cfg);
         pipelines.emplace_back(pipe);
+        std::cout<<"device connect3"<<std::endl;
+
         ss<<"window"<<device_count;
         windown.push_back(ss.str());
 
-        cv::namedWindow(ss.str(),CV_WINDOW_AUTOSIZE);
+        cv::namedWindow(ss.str(),cv::WINDOW_AUTOSIZE);
 
 
         device_count++;
     }
+
+    std::cout<<"device connect end"<<std::endl;
     colormap.set_option(RS2_OPTION_HISTOGRAM_EQUALIZATION_ENABLED, 1.f);
     colormap.set_option(RS2_OPTION_COLOR_SCHEME, 2.f);
 
@@ -76,6 +83,8 @@ int main(int argc,char* argv[])
     }
 */
     while(1){
+        int count = 0;
+
 
         for(auto &&pipe : pipelines)
         {
@@ -141,11 +150,12 @@ int main(int argc,char* argv[])
                 cv::applyColorMap(depthmat, depthmat, cv::COLORMAP_JET);
                 cv::imshow(windown[count], image);
                 //cv::imshow("Pose estimation2", depthmat);
+                count++;
+
                 
             }
         //cv::imshow("Pose estimation", image);
         cv::waitKey(1);
-        count++;
         }
     }
     return 0;
