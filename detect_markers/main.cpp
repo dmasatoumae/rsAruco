@@ -8,7 +8,7 @@
 
 int main(int argc,char* argv[])
 {
-    cv::FileStorage fs("../calibration_paramsD435i2.yml", cv::FileStorage::READ);
+    cv::FileStorage fs("../calibration_paramsD4151.yml", cv::FileStorage::READ);
 
     int count = 0;
     FILE *fp;
