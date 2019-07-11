@@ -2,14 +2,14 @@
 ---
 calibration_time: "Thu 09 Aug 2018 01:51:57 PM EDT"
 image_width: 1280
-image_height: 800
+image_height: 720
 flags: 0
 camera_matrix: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [ 926.18278,      0., 644.45137,
-               0., 926.72542, 356.99369,
+   data: [ 924.09147,      0., 654.00703,
+               0., 924.2491, 353.07739,
                0.,      0.,                      1. ]
 distortion_coefficients: !!opencv-matrix
    rows: 1

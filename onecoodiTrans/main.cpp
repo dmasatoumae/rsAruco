@@ -86,7 +86,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr points_to_pcl(const rs2::points& points, 
 int main(int argc,char* argv[])
 {
     
-    cv::FileStorage fs("../../calibration_params/calibration_paramsD4151.yml", cv::FileStorage::READ);
+    cv::FileStorage fs("../../calibration_params/calibration_paramsD4352.yml", cv::FileStorage::READ);
     float x;
     float y;
     float z;
@@ -165,18 +165,20 @@ int main(int argc,char* argv[])
 
     cv::namedWindow("color",cv::WINDOW_AUTOSIZE);
     while(1){
-
+        pt.clear();
+        ids.clear();
+        corners.clear();
         rs2::points points;
         rs2::pointcloud pc;
-        rs2::video_frame colored_frame;
+        //rs2::video_frame colored_frame;
 
         auto frames=pipe.wait_for_frames();
         
         rs2::align align(RS2_STREAM_COLOR);
         auto aligned_frames = align.process(frames);
+        
 
-
-        colored_frame=aligned_frames.first(RS2_STREAM_COLOR);
+        rs2::video_frame colored_frame=aligned_frames.first(RS2_STREAM_COLOR);
         rs2::depth_frame depth = aligned_frames.get_depth_frame()/*.apply_filter(colormap)*/;
 
         cv::Mat image(cv::Size(wide, height), CV_8UC3, (void*)colored_frame.get_data(), cv::Mat::AUTO_STEP);
@@ -192,22 +194,29 @@ int main(int argc,char* argv[])
             pc.map_to(colored_frame);
 
             points=(pc.calculate(depth));
+            std::cout<<"1"<<std::endl;
             //camera number
             cv::aruco::drawDetectedMarkers(image, corners, ids);
             //tとRのベクトル
-            cv::Vec3d rvecs, tvecs;
+            std::cout<<"2"<<std::endl;
+
+            std::vector<cv::Vec3d> rvecs, tvecs;
             //マーカーのポーズ
             cv::aruco::estimatePoseSingleMarkers(corners, actual_marker_length, camera_matrix, dist_coeffs, rvecs, tvecs);
 
+            std::cout<<"3"<<std::endl;
 
             //for(int i=0; i < ids.size(); i++){
-
+            int i =0;
             for (auto&e : ids){
-                cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs, tvecs, 0.1);
-                std::cout <<"x: " << rvecs*degree << " y: " << rvecs*degree << " z: "<< rvecs*degree <<std::endl;
+                if(e==0){
+                std::cout<<"3.5"<<std::endl;
+                cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs, tvecs, 0.5);
+                std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
                 //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
-                cv::Rodrigues(rvecs,R);
-                
+                cv::Rodrigues(rvecs[i],R);
+                std::cout<<"4"<<std::endl;
+
                 //auto Ri = R.inv();
                 Rt=(R.t());
                 std::cout<<R<<std::endl;
@@ -217,14 +226,15 @@ int main(int argc,char* argv[])
                 
                 center.x = 0;
     		    center.y = 0;
-
+                /*
                 if(e==0)
                 {
+                */
                     std::cout<<"0atta"<<std::endl;
                     //r.emplace_back(rvecs);
                     //t.emplace_back(tvecs);
-                    x=tvecs[0];
-                    y=tvecs[1];
+                    x=tvecs[i][0];
+                    y=tvecs[i][1];
 
 			        pt = corners.front();
     		        for(int n = 0; n < 4; n++ )
@@ -232,24 +242,27 @@ int main(int argc,char* argv[])
         		        //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
         		        center += pt[n];
    			        }
-    		        int x = (int) center.x / 4;
-    		        int y = (int) center.y / 4;
-                    std::cout<<depth.get_distance(x,y)<<std::endl;
-    		        std::cout << depth.get_distance(x,y) <<" m"<< std::endl;
+    		        int xx = (int) center.x / 4;
+    		        int yy = (int) center.y / 4;
+                    std::cout<<depth.get_distance(xx,yy)<<std::endl;
+    		        std::cout << depth.get_distance(xx,yy) <<" m"<< std::endl;
+                    z=depth.get_distance(xx,yy);
                     /*
                     z.emplace_back(depth.get_distance(x,y));
                     std::cout<<"aruco marker (x,y,z)="<<tvecs[idcount][0]<<","<<tvecs[idcount][1]<<",";
                     */
                 }
+            i++;
 
             }
 
-            std::cout<<"R="<<rvecs<<std::endl;
-            std::cout<<"T="<<tvecs<<std::endl;
-            //cv::imshow("window", image);
+            std::cout<<"R="<<rvecs[i]<<std::endl;
+
+            std::cout<<"T="<<tvecs[i]<<std::endl;
+            cv::imshow("window", image);
             //count++;
         }
-        cv::imshow("window", image);
+        //cv::imshow("window", image);
         key=cv::waitKey(1);
         
 
@@ -282,7 +295,16 @@ int main(int argc,char* argv[])
             //cv::Mat3b Rtpoi = Rt[0];
             std::cout<<Rt<<std::endl;
             //transform_1(0,0)=Rtpoi(cv::Point(0,0));
-        
+            Eigen::Matrix4f tmatrix;
+            tmatrix <<
+            Rt.at<double>(0,0), Rt.at<double>(0,1), Rt.at<double>(0,2), 0.0,
+            Rt.at<double>(1,0), Rt.at<double>(1,1), Rt.at<double>(1,2), 0.0,
+            Rt.at<double>(2.0), Rt.at<double>(2,1), Rt.at<double>(2,2), 0.0,
+            0.0, 0.0, 0.0, 1;
+            pcl::transformPointCloud(*save_point0, *save_point0, tmatrix);
+
+            pcl::io::savePLYFileBinary(argv[1],*save_point0);
+            /* 
             transform_1(0,0)=Rt.at<float>(0,0 );
         
             transform_1(0,1)=Rt.at<float>(0,1);
@@ -294,7 +316,9 @@ int main(int argc,char* argv[])
             transform_1(2,1)=Rt.at<float>(2,1);
             transform_1(2,2)=Rt.at<float>(2,2);
             std::cout<<transform_1<<std::endl;
-        
+            */
+            std::cout<<tmatrix<<std::endl;
+            
             //transform_1
         
 
