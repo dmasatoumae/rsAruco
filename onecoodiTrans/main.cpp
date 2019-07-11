@@ -87,7 +87,10 @@ int main(int argc,char* argv[])
 {
     
     cv::FileStorage fs("../../calibration_params/calibration_paramsD4151.yml", cv::FileStorage::READ);
-    
+    float x;
+    float y;
+    float z;
+
     cv::Vec3d r;
     cv::Vec3d t;
     cv::Vec3d camR={14.738876,0.099123,0.136103};
@@ -101,6 +104,9 @@ int main(int argc,char* argv[])
     //マーカーのサイズ(m)
     float actual_marker_length = 0.195;
 
+    cv::Mat R(3, 3, cv::DataType<float>::type);
+    cv::Mat Rt(3, 3, cv::DataType<float>::type);
+    std::vector<cv::Point2f> pt;
 	cv::Point2f center;
     cv::Mat camera_matrix;
     cv::Mat dist_coeffs;
@@ -148,7 +154,7 @@ int main(int argc,char* argv[])
 
     rs2::pipeline pipe(ctx);
     rs2::config cfg;
-    cfg.enable_device(dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
+    //cfg.enable_device(dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
 
     cfg.enable_stream(RS2_STREAM_COLOR, wide, height, RS2_FORMAT_BGR8, 30);
     cfg.enable_stream(RS2_STREAM_DEPTH, wide, height, RS2_FORMAT_Z16, 30);
@@ -173,12 +179,12 @@ int main(int argc,char* argv[])
         colored_frame=aligned_frames.first(RS2_STREAM_COLOR);
         rs2::depth_frame depth = aligned_frames.get_depth_frame()/*.apply_filter(colormap)*/;
 
+        cv::Mat image(cv::Size(wide, height), CV_8UC3, (void*)colored_frame.get_data(), cv::Mat::AUTO_STEP);
 
 
         cv::aruco::detectMarkers(image, dictionary, corners, ids);
         //cv::Mat outputImage 
         cv::cvtColor(image,image,CV_RGB2BGR); 
-        cv::Mat image(cv::Size(wide, height), CV_8UC3, (void*)colored_frame[count].get_data(), cv::Mat::AUTO_STEP);
         
 
         if (ids.size()>0)
@@ -187,15 +193,18 @@ int main(int argc,char* argv[])
 
             points=(pc.calculate(depth));
             //camera number
-            std::cout<<count<<"ban"<<std::endl;
             cv::aruco::drawDetectedMarkers(image, corners, ids);
             //tとRのベクトル
             cv::Vec3d rvecs, tvecs;
             //マーカーのポーズ
-            cv::aruco::estimatePoseSingleMarkers(corners, actual_marker_length, camera_matrix[count], dist_coeffs[count], rvecs, tvecs);
-            for(int i=0; i < ids.size(); i++){
-                cv::aruco::drawAxis(image, camera_matrix[count], dist_coeffs[count], rvecs[i], tvecs[i], 0.1);
-                std::cout <<"x: " << rvecs[0]*degree << " y: " << rvecs[1]*degree << " z: "<< rvecs[2]*degree <<std::endl;
+            cv::aruco::estimatePoseSingleMarkers(corners, actual_marker_length, camera_matrix, dist_coeffs, rvecs, tvecs);
+
+
+            //for(int i=0; i < ids.size(); i++){
+
+            for (auto&e : ids){
+                cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs, tvecs, 0.1);
+                std::cout <<"x: " << rvecs*degree << " y: " << rvecs*degree << " z: "<< rvecs*degree <<std::endl;
                 //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
                 cv::Rodrigues(rvecs,R);
                 
@@ -205,120 +214,94 @@ int main(int argc,char* argv[])
                 std::cout<<Rt<<std::endl;
 
 
-                int idcount=0;
-                for (auto&e : ids){
+                
                 center.x = 0;
     		    center.y = 0;
 
-                    if(e==0)
-                    {
-                        std::cout<<"0atta"<<std::endl;
-                        r.emplace_back(rvecs[idcount]);
-                        t.emplace_back(tvecs[idcount]);
-                        x.emplace_back(tvecs[idcount][0]);
-                        y.emplace_back(tvecs[idcount][1]);
+                if(e==0)
+                {
+                    std::cout<<"0atta"<<std::endl;
+                    //r.emplace_back(rvecs);
+                    //t.emplace_back(tvecs);
+                    x=tvecs[0];
+                    y=tvecs[1];
 
-			            pt = corners.front();
-    		            for(int n = 0; n < 4; n++ )
-    		            {
-        		            //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
-        		            center += pt[n];
-   			            }
-    		            int x = (int) center.x / 4;
-    		            int y = (int) center.y / 4;
-                        std::cout<<depth.get_distance(x,y)<<std::endl;
-    		            std::cout << depth.get_distance(x,y) <<" m"<< std::endl;
-                        /*
-                        z.emplace_back(depth.get_distance(x,y));
-                        std::cout<<"aruco marker (x,y,z)="<<tvecs[idcount][0]<<","<<tvecs[idcount][1]<<",";
-                        */
-                    }
-                        idcount++;
-
+			        pt = corners.front();
+    		        for(int n = 0; n < 4; n++ )
+    		        {
+        		        //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
+        		        center += pt[n];
+   			        }
+    		        int x = (int) center.x / 4;
+    		        int y = (int) center.y / 4;
+                    std::cout<<depth.get_distance(x,y)<<std::endl;
+    		        std::cout << depth.get_distance(x,y) <<" m"<< std::endl;
+                    /*
+                    z.emplace_back(depth.get_distance(x,y));
+                    std::cout<<"aruco marker (x,y,z)="<<tvecs[idcount][0]<<","<<tvecs[idcount][1]<<",";
+                    */
                 }
 
-                std::cout<<"R="<<rvecs[i]<<std::endl;
-                std::cout<<"T="<<tvecs[i]<<std::endl;
-                cv::imshow(windown[count], image);
-                count++;
             }
-            key=cv::waitKey(1);
+
+            std::cout<<"R="<<rvecs<<std::endl;
+            std::cout<<"T="<<tvecs<<std::endl;
+            //cv::imshow("window", image);
+            //count++;
         }
-
-    if (key == 's'&&count == 2)
-    {
-
-        std::cout << "save ply_file" << std::endl;
-        //cv::cvtColor(colored_frame[0], colored_frame[0], cv::RGB2BGR);
-        //cv::cvtColor(colored_frame[1], colored_frame[1], cv::RGB2BGR);
-        auto save_point0 = points_to_pcl(points[0],colored_frame[0]);
-        auto save_point1 = points_to_pcl(points[1],colored_frame[1]);
+        cv::imshow("window", image);
+        key=cv::waitKey(1);
         
-        pcl::io::savePLYFileBinary("0.ply",*save_point0);
-        pcl::io::savePLYFileBinary("1.ply",*save_point1);
-        //pcl::transformPointCloud()
-        
-        save_point0=transform_cloud(save_point0,-x[0],-y[0],-z[0],0,0,0);
-        save_point1=transform_cloud(save_point1,-x[1],-y[1],-z[1],0,0,0);
-        //auto new0=transform_cloud(save_point0,t[1][0]-t[0][0],t[1][1]-t[0][1],t[1][2]-t[0][2],r[1][0]-r[0][0],r[1][1]-r[0][1],r[1][2]-r[0][2]);
-        pcl::io::savePLYFileBinary("h0.ply",*save_point0);
-        pcl::io::savePLYFileBinary("h1.ply",*save_point1);
-        //std::cout<<"x:"<<t[1][0]-t[0][0]<<"y:"<<t[1][1]-t[0][1]<<"z:"<<t[1][2]-t[0][2]<<std::endl;
 
-        //std::cout<<"xk:"<<r[1][0]-r[0][0]<<"yk:"<<r[1][1]-r[0][1]<<"zk:"<<r[1][2]-r[0][2]<<std::endl;     //auto new1=transform_cloud(save_point1,-t[1][0],-t[1][1],-t[1][1],0,0,0);
-        std::vector<double> ro;
-        std::vector<double> pi;
-        std::vector<double> yo;
+        if (key == 's')
+        {
+
+            std::cout << "save ply_file" << std::endl;
+            //cv::cvtColor(colored_frame[0], colored_frame[0], cv::RGB2BGR);
+            //cv::cvtColor(colored_frame[1], colored_frame[1], cv::RGB2BGR);
+            auto save_point0 = points_to_pcl(points,colored_frame);
         
-        Eigen::Matrix4f transform_1=Eigen::Matrix4f::Identity();
-       /* 
-        transform_1 <<
+            pcl::io::savePLYFileBinary("0.ply",*save_point0);
+            //pcl::transformPointCloud()
+        
+            save_point0=transform_cloud(save_point0,-x,-y,-z,0,0,0);
+            //auto new0=transform_cloud(save_point0,t[1][0]-t[0][0],t[1][1]-t[0][1],t[1][2]-t[0][2],r[1][0]-r[0][0],r[1][1]-r[0][1],r[1][2]-r[0][2]);
+            pcl::io::savePLYFileBinary("h0.ply",*save_point0);
+            //std::cout<<"x:"<<t[1][0]-t[0][0]<<"y:"<<t[1][1]-t[0][1]<<"z:"<<t[1][2]-t[0][2]<<std::endl;
+
+            //std::cout<<"xk:"<<r[1][0]-r[0][0]<<"yk:"<<r[1][1]-r[0][1]<<"zk:"<<r[1][2]-r[0][2]<<std::endl;     //auto new1=transform_cloud(save_point1,-t[1][0],-t[1][1],-t[1][1],0,0,0);
+            std::vector<double> ro;
+            std::vector<double> pi;
+            std::vector<double> yo;
+        
+            Eigen::Matrix4f transform_1=Eigen::Matrix4f::Identity();
+            /* 
+            transform_1 <<
             Rt[i](0,0),
-*/
-        //cv::Mat3b Rtpoi = Rt[0];
-        std::cout<<Rt[0]<<std::endl;
-        //transform_1(0,0)=Rtpoi(cv::Point(0,0));
+            */
+            //cv::Mat3b Rtpoi = Rt[0];
+            std::cout<<Rt<<std::endl;
+            //transform_1(0,0)=Rtpoi(cv::Point(0,0));
         
-        transform_1(0,0)=Rt[0].at<float>(0,0 );
+            transform_1(0,0)=Rt.at<float>(0,0 );
         
-        transform_1(0,1)=Rt[0].at<float>(0,1);
-        transform_1(0,2)=Rt[0].at<float>(0,2);
-        transform_1(1,0)=Rt[0].at<float>(1,0);
-        transform_1(1,1)=Rt[0].at<float>(1,1);
-        transform_1(1,2)=Rt[0].at<float>(1,2);
-        transform_1(2,0)=Rt[0].at<float>(2,0);
-        transform_1(2,1)=Rt[0].at<float>(2,1);
-        transform_1(2,2)=Rt[0].at<float>(2,2);
-        std::cout<<transform_1<<std::endl;
+            transform_1(0,1)=Rt.at<float>(0,1);
+            transform_1(0,2)=Rt.at<float>(0,2);
+            transform_1(1,0)=Rt.at<float>(1,0);
+            transform_1(1,1)=Rt.at<float>(1,1);
+            transform_1(1,2)=Rt.at<float>(1,2);
+            transform_1(2,0)=Rt.at<float>(2,0);
+            transform_1(2,1)=Rt.at<float>(2,1);
+            transform_1(2,2)=Rt.at<float>(2,2);
+            std::cout<<transform_1<<std::endl;
         
-        //transform_1
+            //transform_1
         
 
-        Eigen::Matrix4f transform_2=Eigen::Matrix4f::Identity();
-       /* 
-        transform_1 <<
-            Rt[i](0,0),
-*/
-        //cv::Mat3b Rtpoi = Rt[0];
-        std::cout<<Rt[1]<<std::endl;
-        //transform_1(0,0)=Rtpoi(cv::Point(0,0));
-        
-        transform_1(0,0)=Rt[1].at<float>(0,0 );
-        //transform
-        std::cout<<Rt[1].at<float>(0,0)<<std::endl; 
-        transform_2(0,1)=Rt[1].at<float>(0,1);
-        transform_2(0,2)=Rt[1].at<float>(0,2);
-        transform_2(1,0)=Rt[1].at<float>(1,0);
-        transform_2(1,1)=Rt[1].at<float>(1,1);
-        transform_2(1,2)=Rt[1].at<float>(1,2);
-        transform_2(2,0)=Rt[1].at<float>(2,0);
-        transform_2(2,1)=Rt[1].at<float>(2,1);
-        transform_2(2,2)=Rt[1].at<float>(2,2);
-        std::cout<<transform_1<<std::endl;
-        break;
+            break;
+        }
     }
+    
     return 0;
-    }
 
-    
-    
+} 
