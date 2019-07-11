@@ -86,9 +86,14 @@ int main(int argc,char* argv[])
 {
     std::vector<cv::Vec3d> r;
     std::vector<cv::Vec3d> t;
+    cv::Vec3d camR={14.738876,0.099123,0.136103};
     std::vector<double> x;
     std::vector<double> y;
     std::vector<double> z;
+    cv::Mat camRmat(3, 3, cv::DataType<float>::type);
+    cv::Rodrigues(camR,camRmat);
+    
+
 
     //camera parameters read yml file
     cv::FileStorage fs("../../calibration_params/calibration_paramsD4151.yml", cv::FileStorage::READ);
@@ -110,7 +115,8 @@ int main(int argc,char* argv[])
     std::vector<cv::Mat> dist_coeffs;
     cv::Mat camera_matrix_b, dist_coeffs_b;
     cv::Ptr<cv::aruco::DetectorParameters> parameters;
-
+    std::vector<cv::Mat> R/*(3, 3, cv::DataType<float>::type)*/;
+    std::vector<cv::Mat> Rt/*(3, 3, cv::DataType<float>::type)*/;
 	std::vector<cv::Point2f> pt;
     std::vector<std::string> windown;
     std::vector<std::vector<cv::Point2f> > corners;
@@ -202,6 +208,8 @@ int main(int argc,char* argv[])
         x.clear();
         y.clear();
         z.clear();
+        R.clear();
+        Rt.clear();
 
         for(auto &&pipe : pipelines)
         {
@@ -239,12 +247,13 @@ int main(int argc,char* argv[])
                 for(int i=0; i < ids.size(); i++){
                     cv::aruco::drawAxis(image, camera_matrix[count], dist_coeffs[count], rvecs[i], tvecs[i], 0.1);
                     std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
-                    cv::Mat R(3, 3, cv::DataType<float>::type);
-                    cv::Rodrigues(rvecs[i],R);
+                    cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
+                    cv::Rodrigues(rvecs[i],Rbefor);
+                    R.emplace_back(Rbefor);
                     //auto Ri = R.inv();
-                    auto Rt =R.t();
-                    std::cout<<R<<std::endl;
-                    std::cout<<Rt<<std::endl;
+                    Rt.emplace_back(R[i].t());
+                    std::cout<<R[i]<<std::endl;
+                    std::cout<<Rt[i]<<std::endl;
                         
                     int idcount=0;
                     for (auto&e : ids){
@@ -341,6 +350,57 @@ int main(int argc,char* argv[])
         std::vector<double> ro;
         std::vector<double> pi;
         std::vector<double> yo;
+        
+        Eigen::Matrix4f transform_1=Eigen::Matrix4f::Identity();
+       /* 
+        transform_1 <<
+            Rt[i](0,0),
+*/
+        //cv::Mat3b Rtpoi = Rt[0];
+        std::cout<<Rt[0]<<std::endl;
+        //transform_1(0,0)=Rtpoi(cv::Point(0,0));
+        
+        transform_1(0,0)=Rt[0].at<float>(0,0 );
+        
+        transform_1(0,1)=Rt[0].at<float>(0,1);
+        transform_1(0,2)=Rt[0].at<float>(0,2);
+        transform_1(1,0)=Rt[0].at<float>(1,0);
+        transform_1(1,1)=Rt[0].at<float>(1,1);
+        transform_1(1,2)=Rt[0].at<float>(1,2);
+        transform_1(2,0)=Rt[0].at<float>(2,0);
+        transform_1(2,1)=Rt[0].at<float>(2,1);
+        transform_1(2,2)=Rt[0].at<float>(2,2);
+        std::cout<<transform_1<<std::endl;
+        
+        //transform_1
+        
+
+        Eigen::Matrix4f transform_2=Eigen::Matrix4f::Identity();
+       /* 
+        transform_1 <<
+            Rt[i](0,0),
+*/
+        //cv::Mat3b Rtpoi = Rt[0];
+        std::cout<<Rt[1]<<std::endl;
+        //transform_1(0,0)=Rtpoi(cv::Point(0,0));
+        
+        transform_1(0,0)=Rt[1].at<float>(0,0 );
+        //transform
+        std::cout<<Rt[1].at<float>(0,0)<<std::endl; 
+        transform_2(0,1)=Rt[1].at<float>(0,1);
+        transform_2(0,2)=Rt[1].at<float>(0,2);
+        transform_2(1,0)=Rt[1].at<float>(1,0);
+        transform_2(1,1)=Rt[1].at<float>(1,1);
+        transform_2(1,2)=Rt[1].at<float>(1,2);
+        transform_2(2,0)=Rt[1].at<float>(2,0);
+        transform_2(2,1)=Rt[1].at<float>(2,1);
+        transform_2(2,2)=Rt[1].at<float>(2,2);
+        std::cout<<transform_1<<std::endl;
+
+
+
+
+        /*
         for(int i=0;i<2;i++)
         {
             //横軸//dekita
@@ -363,7 +423,7 @@ int main(int argc,char* argv[])
         std::cout<<"横軸:"<<ro[0]<<","<<"tate:"<<yo[0]<<","<<"guru:"<<pi[0]<<","<<std::endl;
         std::cout<<"横軸:"<<ro[1]<<","<<"tate:"<<yo[1]<<","<<"guru:"<<pi[1]<<","<<std::endl;
         //std::cout<<ro[1]<<","<<yo[1]<<","<<pi[1]<<","<<std::endl;
-
+        */
         break;
 
 
