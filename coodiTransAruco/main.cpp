@@ -239,6 +239,13 @@ int main(int argc,char* argv[])
                 for(int i=0; i < ids.size(); i++){
                     cv::aruco::drawAxis(image, camera_matrix[count], dist_coeffs[count], rvecs[i], tvecs[i], 0.1);
                     std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
+                    cv::Mat R(3, 3, cv::DataType<float>::type);
+                    cv::Rodrigues(rvecs[i],R);
+                    //auto Ri = R.inv();
+                    auto Rt =R.t();
+                    std::cout<<R<<std::endl;
+                    std::cout<<Rt<<std::endl;
+                        
                     int idcount=0;
                     for (auto&e : ids){
                     center.x = 0;
