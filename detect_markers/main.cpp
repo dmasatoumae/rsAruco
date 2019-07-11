@@ -83,6 +83,8 @@ int main(int argc,char* argv[])
                 cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1);
                 std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
 
+                    std::cout<<"R="<<rvecs[i]<<std::endl;
+                    std::cout<<"T="<<tvecs[i]<<std::endl;
                 center.x = 0;
     		    center.y = 0;
           
