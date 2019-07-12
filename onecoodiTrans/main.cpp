@@ -87,9 +87,9 @@ int main(int argc,char* argv[])
 {
     
     cv::FileStorage fs("../../calibration_params/calibration_paramsD4352.yml", cv::FileStorage::READ);
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
 
     cv::Vec3d r;
     cv::Vec3d t;
@@ -102,10 +102,10 @@ int main(int argc,char* argv[])
     float degree = 180/3.141592;
     double PI =3.141592;
     //マーカーのサイズ(m)
-    float actual_marker_length = 0.195;
+    float actual_marker_length = 0.064;
 
-    cv::Mat R(3, 3, cv::DataType<float>::type);
-    cv::Mat Rt(3, 3, cv::DataType<float>::type);
+    cv::Mat R(3, 3, cv::DataType<double>::type);
+    cv::Mat Rt(3, 3, cv::DataType<double>::type);
     std::vector<cv::Point2f> pt;
 	cv::Point2f center;
     cv::Mat camera_matrix;
@@ -212,7 +212,7 @@ int main(int argc,char* argv[])
                 if(e==0){
                     std::cout<<"3.5"<<std::endl;
                     cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.5);
-                    std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
+                    //std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
                     //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
                     cv::Rodrigues(rvecs[i],R);
                     std::cout<<"4"<<std::endl;
@@ -287,7 +287,7 @@ int main(int argc,char* argv[])
             std::vector<double> pi;
             std::vector<double> yo;
         
-            Eigen::Matrix4f transform_1=Eigen::Matrix4f::Identity();
+            Eigen::Matrix4d transform_1=Eigen::Matrix4d::Identity();
             /* 
             transform_1 <<
             Rt[i](0,0),
@@ -295,11 +295,14 @@ int main(int argc,char* argv[])
             //cv::Mat3b Rtpoi = Rt[0];
             std::cout<<Rt<<std::endl;
             //transform_1(0,0)=Rtpoi(cv::Point(0,0));
-            Eigen::Matrix4f tmatrix;
+            Eigen::Matrix4d tmatrix;
+            std::cout<<Rt.at<double>(2,0)<<std::endl;
+            //直接eigenに代入すると値がおかしくなる
+            double nizero =Rt.at<double>(2,0);
             tmatrix <<
             Rt.at<double>(0,0), Rt.at<double>(0,1), Rt.at<double>(0,2), 0.0,
             Rt.at<double>(1,0), Rt.at<double>(1,1), Rt.at<double>(1,2), 0.0,
-            Rt.at<double>(2.0), Rt.at<double>(2,1), Rt.at<double>(2,2), 0.0,
+            nizero, Rt.at<double>(2,1), Rt.at<double>(2,2), 0.0,
             0.0, 0.0, 0.0, 1;
             pcl::transformPointCloud(*save_point0, *save_point0, tmatrix);
 
