@@ -244,7 +244,10 @@ int main(int argc,char* argv[])
                 std::vector<cv::Vec3d> rvecs, tvecs;
                 //マーカーのポーズ
                 cv::aruco::estimatePoseSingleMarkers(corners, actual_marker_length, camera_matrix[count], dist_coeffs[count], rvecs, tvecs);
-                for(int i=0; i < ids.size(); i++){
+
+                int i = 0;
+                for (auto&e : ids){
+                //for(int i=0; i < ids.size(); i++){
                     cv::aruco::drawAxis(image, camera_matrix[count], dist_coeffs[count], rvecs[i], tvecs[i], 0.1);
                     std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
                     cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
@@ -256,48 +259,50 @@ int main(int argc,char* argv[])
                     std::cout<<Rt[i]<<std::endl;
                         
                     int idcount=0;
-                    for (auto&e : ids){
+                    //for (auto&e : ids){
                     center.x = 0;
     		        center.y = 0;
 
-                        if(e==0){
-                            std::cout<<"0atta"<<std::endl;
-                            r.emplace_back(rvecs[idcount]);
-                            t.emplace_back(tvecs[idcount]);
-                            x.emplace_back(tvecs[idcount][0]);
-                            y.emplace_back(tvecs[idcount][1]);
+                    if(e==0){
+                        std::cout<<"0atta"<<std::endl;
+                        r.emplace_back(rvecs[idcount]);
+                        t.emplace_back(tvecs[idcount]);
+                        x.emplace_back(tvecs[idcount][0]);
+                        y.emplace_back(tvecs[idcount][1]);
 
-			                pt = corners.front();
-    		                for(int n = 0; n < 4; n++ )
-    		                {
-        		                //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
-        		                center += pt[n];
-   			                }
-    		                int x = (int) center.x / 4;
-    		                int y = (int) center.y / 4;
-                            std::cout<<depth.get_distance(x,y)<<std::endl;
-    		                std::cout << depth.get_distance(x,y) <<" m"<< std::endl;
-                            z.emplace_back(depth.get_distance(x,y));
-                            std::cout<<"aruco marker (x,y,z)="<<tvecs[idcount][0]<<","<<tvecs[idcount][1]<<",";
-                            }
-                        idcount++;
+			            pt = corners.front();
+    		            for(int n = 0; n < 4; n++ )
+    		            {
+        		            //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
+        		            center += pt[n];
+   			            }
+    		            int x = (int) center.x / 4;
+    		            int y = (int) center.y / 4;
+                        std::cout<<depth.get_distance(x,y)<<std::endl;
+    		            std::cout << depth.get_distance(x,y) <<" m"<< std::endl;
+                        z.emplace_back(depth.get_distance(x,y));
+                        std::cout<<"aruco marker (x,y,z)="<<tvecs[idcount][0]<<","<<tvecs[idcount][1]<<",";
+                        count++;
+                        }
+                    idcount++;
+                    i++;
 
-                    }
-                    std::cout<<"R="<<rvecs[i]<<std::endl;
-                    std::cout<<"T="<<tvecs[i]<<std::endl;
+                }
+                std::cout<<"R="<<rvecs[i]<<std::endl;
+                std::cout<<"T="<<tvecs[i]<<std::endl;
           
-                    //std::vector<rs2::pipeline>  pipelines;
+                //std::vector<rs2::pipeline>  pipelines;
 
-                    //rs2::context                ctx;            // Create librealsense context for managing devices
+                //rs2::context                ctx;            // Create librealsense context for managing devices
 
-                    //rs2::colorizer              colorizer;
-                    /*
-			        pt = corners.front();
-    		        for(int n = 0; n < 4; n++ )
-    		        {
-        		        //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
-        		        center += pt[n];
-   			        }
+                //rs2::colorizer              colorizer;
+                /*
+			    pt = corners.front();
+    		    for(int n = 0; n < 4; n++ )
+    		    {
+        		    //std::cout << depth_frame.get_distance(pt[i].x,pt[i].y) << std::endl;
+        		    center += pt[n];
+   			    }
     		        int x = (int) center.x / 4;
     		        int y = (int) center.y / 4;
                     std::cout<<depth.get_distance(x,y)<<std::endl;
@@ -310,13 +315,13 @@ int main(int argc,char* argv[])
                     fclose(fp);
                 
                     }*/
-                }
+                
                 //depthmat.convertTo( depthmat, CV_8U, -255.0 / 10000.0, 255.0 );
                 //cv::equalizeHist(depthmat, depthmat);
                 //cv::applyColorMap(depthmat, depthmat, cv::COLORMAP_JET);
                 cv::imshow(windown[count], image);
                 //cv::imshow("Pose estimation2", depthmat);
-                count++;
+                //count++;
 
                 
             }
@@ -360,18 +365,18 @@ int main(int argc,char* argv[])
         std::cout<<Rt[0]<<std::endl;
         //transform_1(0,0)=Rtpoi(cv::Point(0,0));
         
-        transform_1(0,0)=Rt[0].at<float>(0,0 );
+        transform_1(0,0)=Rt[0].at<double>(0,0);
         
-        transform_1(0,1)=Rt[0].at<float>(0,1);
-        transform_1(0,2)=Rt[0].at<float>(0,2);
-        transform_1(1,0)=Rt[0].at<float>(1,0);
-        transform_1(1,1)=Rt[0].at<float>(1,1);
-        transform_1(1,2)=Rt[0].at<float>(1,2);
-        transform_1(2,0)=Rt[0].at<float>(2,0);
-        transform_1(2,1)=Rt[0].at<float>(2,1);
-        transform_1(2,2)=Rt[0].at<float>(2,2);
+        transform_1(0,1)=Rt[0].at<double>(0,1);
+        transform_1(0,2)=Rt[0].at<double>(0,2);
+        transform_1(1,0)=Rt[0].at<double>(1,0);
+        transform_1(1,1)=Rt[0].at<double>(1,1);
+        transform_1(1,2)=Rt[0].at<double>(1,2);
+        transform_1(2,0)=Rt[0].at<double>(2,0);
+        transform_1(2,1)=Rt[0].at<double>(2,1);
+        transform_1(2,2)=Rt[0].at<double>(2,2);
         std::cout<<transform_1<<std::endl;
-        
+        pcl::transformPointCloud(*save_point0, *save_point0, transform_1);
         //transform_1
         
 
@@ -384,21 +389,24 @@ int main(int argc,char* argv[])
         std::cout<<Rt[1]<<std::endl;
         //transform_1(0,0)=Rtpoi(cv::Point(0,0));
         
-        transform_1(0,0)=Rt[1].at<float>(0,0 );
+        transform_1(0,0)=Rt[1].at<double>(0,0 );
         //transform
-        std::cout<<Rt[1].at<float>(0,0)<<std::endl; 
-        transform_2(0,1)=Rt[1].at<float>(0,1);
-        transform_2(0,2)=Rt[1].at<float>(0,2);
-        transform_2(1,0)=Rt[1].at<float>(1,0);
-        transform_2(1,1)=Rt[1].at<float>(1,1);
-        transform_2(1,2)=Rt[1].at<float>(1,2);
-        transform_2(2,0)=Rt[1].at<float>(2,0);
-        transform_2(2,1)=Rt[1].at<float>(2,1);
-        transform_2(2,2)=Rt[1].at<float>(2,2);
-        std::cout<<transform_1<<std::endl;
+        std::cout<<Rt[1].at<double>(0,0)<<std::endl; 
+        transform_2(0,1)=Rt[1].at<double>(0,1);
+        transform_2(0,2)=Rt[1].at<double>(0,2);
+        transform_2(1,0)=Rt[1].at<double>(1,0);
+        transform_2(1,1)=Rt[1].at<double>(1,1);
+        transform_2(1,2)=Rt[1].at<double>(1,2);
+        transform_2(2,0)=Rt[1].at<double>(2,0);
+        transform_2(2,1)=Rt[1].at<double>(2,1);
+        transform_2(2,2)=Rt[1].at<double>(2,2);
+        std::cout<<transform_2<<std::endl;
+
+        pcl::transformPointCloud(*save_point1, *save_point1, transform_2);
 
 
-
+        pcl::io::savePLYFileBinary("t0.ply",*save_point0);
+        pcl::io::savePLYFileBinary("t1.ply",*save_point1);
 
         /*
         for(int i=0;i<2;i++)

@@ -163,7 +163,7 @@ int main(int argc,char* argv[])
     //ss<<bag_name<<".bag";
     pipe.start(cfg);
 
-    cv::namedWindow("color",cv::WINDOW_AUTOSIZE);
+    cv::namedWindow("window",cv::WINDOW_AUTOSIZE);
     while(1){
         pt.clear();
         ids.clear();
@@ -210,26 +210,26 @@ int main(int argc,char* argv[])
             int i =0;
             for (auto&e : ids){
                 if(e==0){
-                std::cout<<"3.5"<<std::endl;
-                cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs, tvecs, 0.5);
-                std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
-                //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
-                cv::Rodrigues(rvecs[i],R);
-                std::cout<<"4"<<std::endl;
+                    std::cout<<"3.5"<<std::endl;
+                    cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.5);
+                    std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
+                    //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
+                    cv::Rodrigues(rvecs[i],R);
+                    std::cout<<"4"<<std::endl;
 
-                //auto Ri = R.inv();
-                Rt=(R.t());
-                std::cout<<R<<std::endl;
-                std::cout<<Rt<<std::endl;
+                    //auto Ri = R.inv();
+                    Rt=(R.t());
+                    //std::cout<<R<<std::endl;
+                    //std::cout<<Rt<<std::endl;
 
 
                 
-                center.x = 0;
-    		    center.y = 0;
-                /*
-                if(e==0)
-                {
-                */
+                    center.x = 0;
+    		        center.y = 0;
+                    /*
+                    if(e==0)
+                    {
+                    */
                     std::cout<<"0atta"<<std::endl;
                     //r.emplace_back(rvecs);
                     //t.emplace_back(tvecs);
@@ -256,14 +256,14 @@ int main(int argc,char* argv[])
 
             }
 
-            std::cout<<"R="<<rvecs[i]<<std::endl;
+            //std::cout<<"R="<<rvecs[i]<<std::endl;
 
-            std::cout<<"T="<<tvecs[i]<<std::endl;
+            //std::cout<<"T="<<tvecs[i]<<std::endl;
             cv::imshow("window", image);
             //count++;
         }
         //cv::imshow("window", image);
-        key=cv::waitKey(1);
+        key=cv::waitKey(5);
         
 
         if (key == 's')
