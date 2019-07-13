@@ -14,6 +14,23 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <iostream>
 #include <string>
+void Eigen_save_csv(Eigen::Matrix4d save_matrix,std::string filename)
+{
+    std::ofstream reading_file(filename);
+    //reading_file.open(filename,ios::trunc);
+    if (!reading_file)
+    {
+        std::cout << "ファイルが開けませんでした。" << std::endl;
+        std::cin.get();
+        //return 0;
+    }
+    reading_file <<save_matrix<< std::endl;
+    std::cout<<"ファイルに書き込みました"<<std::endl;
+    std::cin.get();
+    //return 0;
+    return;
+
+}
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr transform_cloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud,double x,double y,double z,double roll,double pitch,double yow){
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_trans(new pcl::PointCloud<pcl::PointXYZRGB>);
     //pcl::PointCloud<pcl::PointXYZRGB>:: transformed_cloud;
@@ -194,28 +211,23 @@ int main(int argc,char* argv[])
             pc.map_to(colored_frame);
 
             points=(pc.calculate(depth));
-            std::cout<<"1"<<std::endl;
             //camera number
             cv::aruco::drawDetectedMarkers(image, corners, ids);
             //tとRのベクトル
-            std::cout<<"2"<<std::endl;
 
             std::vector<cv::Vec3d> rvecs, tvecs;
             //マーカーのポーズ
             cv::aruco::estimatePoseSingleMarkers(corners, actual_marker_length, camera_matrix, dist_coeffs, rvecs, tvecs);
 
-            std::cout<<"3"<<std::endl;
 
             //for(int i=0; i < ids.size(); i++){
             int i =0;
             for (auto&e : ids){
                 if(e==0){
-                    std::cout<<"3.5"<<std::endl;
                     cv::aruco::drawAxis(image, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.5);
                     //std::cout <<"x: " << rvecs[i][0]*degree << " y: " << rvecs[i][1]*degree << " z: "<< rvecs[i][2]*degree <<std::endl;
                     //cv::Mat Rbefor(3, 3, cv::DataType<float>::type);
                     cv::Rodrigues(rvecs[i],R);
-                    std::cout<<"4"<<std::endl;
 
                     //auto Ri = R.inv();
                     Rt=(R.t());
@@ -321,6 +333,7 @@ int main(int argc,char* argv[])
             std::cout<<transform_1<<std::endl;
             */
             std::cout<<tmatrix<<std::endl;
+            Eigen_save_csv(tmatrix,argv[2]);
             
             //transform_1
         
