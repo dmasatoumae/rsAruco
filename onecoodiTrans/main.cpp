@@ -14,7 +14,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <iostream>
 #include <string>
-void Eigen_save_csv(Eigen::Matrix4d save_matrix,std::string filename)
+void Eigen_save_csv(Eigen::Matrix4d hsave_m,Eigen::Matrix4d rsave_matrix,std::string filename)
 {
     std::ofstream reading_file(filename);
     //reading_file.open(filename,ios::trunc);
@@ -24,7 +24,7 @@ void Eigen_save_csv(Eigen::Matrix4d save_matrix,std::string filename)
         std::cin.get();
         //return 0;
     }
-    reading_file <<save_matrix<< std::endl;
+    reading_file <<rsave_matrix<<"\n"<<hsave_m<< std::endl;
     std::cout<<"ファイルに書き込みました"<<std::endl;
     std::cin.get();
     //return 0;
@@ -119,7 +119,7 @@ int main(int argc,char* argv[])
     float degree = 180/3.141592;
     double PI =3.141592;
     //マーカーのサイズ(m)
-    float actual_marker_length = 0.064;
+    float actual_marker_length = 0.184;
 
     cv::Mat R(3, 3, cv::DataType<double>::type);
     cv::Mat Rt(3, 3, cv::DataType<double>::type);
@@ -289,7 +289,7 @@ int main(int argc,char* argv[])
             pcl::io::savePLYFileBinary("0.ply",*save_point0);
             //pcl::transformPointCloud()
         
-            save_point0=transform_cloud(save_point0,-x,-y,-z,0,0,0);
+            //save_point0=transform_cloud(save_point0,-x,-y,-z,0,0,0);
             //auto new0=transform_cloud(save_point0,t[1][0]-t[0][0],t[1][1]-t[0][1],t[1][2]-t[0][2],r[1][0]-r[0][0],r[1][1]-r[0][1],r[1][2]-r[0][2]);
             pcl::io::savePLYFileBinary("h0.ply",*save_point0);
             //std::cout<<"x:"<<t[1][0]-t[0][0]<<"y:"<<t[1][1]-t[0][1]<<"z:"<<t[1][2]-t[0][2]<<std::endl;
@@ -308,17 +308,28 @@ int main(int argc,char* argv[])
             std::cout<<Rt<<std::endl;
             //transform_1(0,0)=Rtpoi(cv::Point(0,0));
             Eigen::Matrix4d tmatrix;
+            Eigen::Matrix4d hmatrix;
             std::cout<<Rt.at<double>(2,0)<<std::endl;
             //直接eigenに代入すると値がおかしくなる
             double nizero =Rt.at<double>(2,0);
             tmatrix <<
-            Rt.at<double>(0,0), Rt.at<double>(0,1), Rt.at<double>(0,2), 0.0,
-            Rt.at<double>(1,0), Rt.at<double>(1,1), Rt.at<double>(1,2), 0.0,
-            nizero, Rt.at<double>(2,1), Rt.at<double>(2,2), 0.0,
+            Rt.at<double>(0,0), Rt.at<double>(0,1), Rt.at<double>(0,2),0,
+            Rt.at<double>(1,0), Rt.at<double>(1,1), Rt.at<double>(1,2),0,
+            nizero, Rt.at<double>(2,1), Rt.at<double>(2,2), 0,
             0.0, 0.0, 0.0, 1;
+            hmatrix <<
+            1.0,0.0,0.0,-x,
+            0.0,1.0,0.0,-y,
+            0.0,0.0,1.0,-z,
+            0.0,0.0,0.0,1.0;
+            pcl::transformPointCloud(*save_point0, *save_point0, hmatrix);
             pcl::transformPointCloud(*save_point0, *save_point0, tmatrix);
 
+
             pcl::io::savePLYFileBinary(argv[1],*save_point0);
+            //pcl::transformPointCloud(*save_point0, *save_point0, tmatrix*hmatrix);
+
+            //pcl::io::savePLYFileBinary("test.ply",*save_point0);
             /* 
             transform_1(0,0)=Rt.at<float>(0,0 );
         
@@ -333,7 +344,7 @@ int main(int argc,char* argv[])
             std::cout<<transform_1<<std::endl;
             */
             std::cout<<tmatrix<<std::endl;
-            Eigen_save_csv(tmatrix,argv[2]);
+            Eigen_save_csv(hmatrix,tmatrix,argv[2]);
             
             //transform_1
         
